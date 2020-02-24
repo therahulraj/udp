@@ -1,0 +1,22 @@
+const net = require("net")
+
+const server = net.createServer(socket => {
+    socket.write("hello")
+    socket.on("data", data => {
+        console.log(data.toString())
+    })
+    setInterval(() => {
+        socket.write("rahul raj")
+    }, 1000)
+})
+
+server.listen(8080)
+
+// const dgram = require("dgram")
+// const socket = dgram.createSocket('udp4')
+
+// socket.on('message', (msg, rinfo) => {
+//     console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`)
+// })
+
+// socket.bind(8081);
