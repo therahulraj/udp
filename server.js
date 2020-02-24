@@ -1,5 +1,6 @@
 const net = require("net")
 
+let port = process.env.PORT || 8080;
 const server = net.createServer(socket => {
     socket.write("hello")
     socket.on("data", data => {
@@ -10,7 +11,7 @@ const server = net.createServer(socket => {
     }, 1000)
 })
 
-server.listen(8080)
+server.listen(port)
 
 // const dgram = require("dgram")
 // const socket = dgram.createSocket('udp4')
