@@ -12,7 +12,7 @@ const server = net.createServer(socket => {
     }, 1000)
 })
 
-server.listen(port)
+server.listen(8080)
 
 // const dgram = require("dgram")
 // const socket = dgram.createSocket('udp4')
