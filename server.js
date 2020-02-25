@@ -27,18 +27,27 @@ const dgram = require("dgram")
 const socket = dgram.createSocket('udp4')
 const message = Buffer.from('Some bytes');
 
-socket.on('message', (msg, rinfo) => {
-    console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
-    ;
-})
 
-// // socket.send(message, 8081, 'localhost', (err) => {
-// //     client.close();
-// //   });
+var data1 = Buffer.from('hello');
+var data2 = Buffer.from('world');
+
+// socket.on('message', (msg, rinfo) => {
+//     console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
+//     ;
+// })
+
+socket.send([data1,data2], 8081,'localhost', function(error){
+    if(error){
+      client.close();
+    }else{
+      console.log('Data sent !!!');
+    }
+  
+  });
 
 // socket.on('listening', () => {
 //     const address = socket.address();
 //     console.log(`server listening ${address.address}:${address.port}`);
 //   });
 
-socket.bind(8081);
+// socket.bind(8081);
