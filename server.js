@@ -36,12 +36,19 @@ var data2 = Buffer.from('world');
 //     ;
 // })
 
-socket.send([data1,data2], 8081,'localhost', function(error){
+socket.on('message',function(msg, info){
+    console.log('Data received from client : ' + msg.toString());
+    console.log('Received %d bytes from %s:%d\n',msg.length, info.address, info.port);
+  
+  //sending msg
+  socket.send(msg, info.port,'localhost',function(error){
     if(error){
       client.close();
     }else{
       console.log('Data sent !!!');
     }
+  
+  });
   
   });
 
@@ -50,4 +57,4 @@ socket.send([data1,data2], 8081,'localhost', function(error){
 //     console.log(`server listening ${address.address}:${address.port}`);
 //   });
 
-// socket.bind(8081);
+socket.bind(8081);
