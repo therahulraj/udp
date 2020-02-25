@@ -1,18 +1,18 @@
 const net = require("net")
 
-let port = process.env.PORT || 8080;
+let port = 8080;
 // var address = server.address();
-const server = net.createServer(socket => {
-    socket.write("hello")
-    socket.on("data", data => {
-        console.log(data.toString())
-    })
-    setInterval(() => {
-        socket.write("rahul raj")
-    }, 1000)
-})
+// const server = net.createServer(socket => {
+//     socket.write("hello")
+//     socket.on("data", data => {
+//         console.log(data.toString())
+//     })
+//     setInterval(() => {
+//         socket.write("rahul raj")
+//     }, 1000)
+// })
 
-server.listen(port)
+// server.listen(port)
 // server.listen(function(){
 //     var address = server.address();
 //     var port = address.port;
@@ -23,22 +23,22 @@ server.listen(port)
 //     console.log('Server is IP4/IP6 : ' + family);
 //   });
 
-// const dgram = require("dgram")
-// const socket = dgram.createSocket('udp4')
-// const message = Buffer.from('Some bytes');
+const dgram = require("dgram")
+const socket = dgram.createSocket('udp4')
+const message = Buffer.from('Some bytes');
 
-// socket.on('message', (msg, rinfo) => {
-//     console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
-//     ;
-// })
+socket.on('message', (msg, rinfo) => {
+    console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
+    ;
+})
 
 // // socket.send(message, 8081, 'localhost', (err) => {
 // //     client.close();
 // //   });
 
-// // socket.on('listening', () => {
-// //     const address = socket.address();
-// //     console.log(`server listening ${address.address}:${address.port}`);
-// //   });
+// socket.on('listening', () => {
+//     const address = socket.address();
+//     console.log(`server listening ${address.address}:${address.port}`);
+//   });
 
-// // socket.bind(8081);
+socket.bind(8081);
