@@ -41,14 +41,17 @@ socket.on('message',function(msg, info){
     console.log('Received %d bytes from %s:%d\n',msg.length, info.address, info.port);
   
   //sending msg
-  socket.send(msg, info.port,'localhost',function(error){
-    if(error){
-      client.close();
-    }else{
-      console.log('Data sent !!!');
-    }
-  
-  });
+  setInterval(() => {
+    socket.send(msg, info.port, info.address, function(error){
+      if(error){
+        client.close();
+      }else{
+        console.log('Data sent !!!');
+      }
+    
+    });
+  }, 1000)
+ 
   
   });
 
