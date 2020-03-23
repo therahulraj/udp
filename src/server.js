@@ -28,8 +28,13 @@ const io = socketIO(HTTP_server);
 
 //****************************serving the static web pages*********************************************************
 const publicDirectoryPath = path.join(__dirname, '../public');
-app.use(express.static(publicDirectoryPath))
+app.use(express.static(publicDirectoryPath));
 
+
+
+
+
+//********************************utils functions********************************************************************
 
 function update_check_save_value(data) {
     single_device_value = data.split(",");
@@ -52,20 +57,32 @@ function update_check_save_value(data) {
 
 
 //*****************************for HTTP web socket****************************************************************
+
 io.on('connection', (HTTP_socket) => {
 
     HTTP_socket.emit('setupValue', all_devices_value.join(";"));
 
-    emitter.on('valueChangedByTCP', (data) => {
-        HTTP_socket.emit('updatedValue', data);
-    })
+    function writeOnHTTPSocket(data) {
+        HTTP_socket.emit('updatedValue', data)
+    }
+
+    emitter.on('valueChangedByTCP', writeOnHTTPSocket);
 
     HTTP_socket.on('updateValue', (data) => {
+
         if (update_check_save_value(data)) {
             emitter.emit('valueChangedByHTTP', data);
             io.emit('updatedValue', data);
         }
+
     })
+
+    HTTP_socket.on('disconnect', () => {
+
+        emitter.removeListener('valueChangedByTCP', writeOnHTTPSocket);
+
+    })
+    
 })
 
 
@@ -77,15 +94,19 @@ TCP_server.on('connection', handleConnection);
 
 function handleConnection(TCP_socket) {
 
+    function writeOnTCPSocket(data) {
+        TCP_socket.write(data);
+    }
+
     TCP_socket.write(all_devices_value.join(";"));
 
-    emitter.on('valueChangedByHTTP', (data) => {
-        TCP_socket.write(data);
-    })
 
-    emitter.on('valueChangedByTCP', (data) => {
-        TCP_socket.write(data);
-    })
+    emitter.on('valueChangedByHTTP', writeOnTCPSocket)
+
+
+
+    emitter.on('valueChangedByTCP', writeOnTCPSocket);
+
         
     TCP_socket.on('data', onData)
     TCP_socket.on('close', onClose)
@@ -99,12 +120,20 @@ function handleConnection(TCP_socket) {
     }
 
     function onClose() {
-        console.log("one connection closed.")
+
+        emitter.removeListener('valueChangedByHTTP', writeOnTCPSocket);
+
+        emitter.removeListener('valueChangedByTCP', writeOnTCPSocket);
+
     }
 
+
     function onError(error) {
-         console.log(error)
+        
+        console.log(error);
+
     }
+
 }
 
 
