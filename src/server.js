@@ -94,6 +94,10 @@ TCP_server.on('connection', handleConnection);
 
 function handleConnection(TCP_socket) {
 
+    console.log(TCP_socket);
+
+    let data_count = 0;
+
     function writeOnTCPSocket(data) {
         TCP_socket.write(data);
     }
@@ -108,12 +112,17 @@ function handleConnection(TCP_socket) {
     emitter.on('valueChangedByTCP', writeOnTCPSocket);
 
         
+
     TCP_socket.on('data', onData)
     TCP_socket.on('close', onClose)
     TCP_socket.on('error', onError)
 
     function onData(data) {
         data = data.toString().trim();
+
+        data_count++;
+
+        console.log(data_count);
         if (update_check_save_value(data)) {
             emitter.emit('valueChangedByTCP', data);
         }
