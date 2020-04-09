@@ -25,14 +25,11 @@ async function checkDeviceID(device_id) {
  
 }
 
-function writeOnHTTPSocket(io, TCP_data, TCP_device_id) {
-    if (TCP_device_id == HTTP_device_id) {
-        io.to(TCP_device_id).emit('updatedValue', TCP_data)
-    }
-}
+
+
+
 
  module.exports = {
      checkDeviceID,
-     findDeviceByToken,
-     writeOnHTTPSocket
+     findDeviceByToken
  }

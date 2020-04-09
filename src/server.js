@@ -10,9 +10,7 @@ require('./db/mongoose');
 const Device = require('./models/device');
 const {
     checkDeviceID,
-    findDeviceByToken,
-    writeOnHTTPSocket,
-    writeOnTCPSocket
+    findDeviceByToken
 } = require('./utils/utils');
 const userRouter = require('./routers/user')
 
