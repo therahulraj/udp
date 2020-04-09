@@ -1,11 +1,22 @@
 const path = require('path');
 const net = require("net");
 const http = require('http');
+const EventEmitter = require('events');
 
 const express = require('express');
 const socketIO= require('socket.io');
 
-const EventEmitter = require('events');
+require('./db/mongoose');
+const Device = require('./models/device');
+const {
+    checkDeviceID,
+    findDeviceByToken,
+    writeOnHTTPSocket,
+    writeOnTCPSocket
+} = require('./utils/utils');
+const userRouter = require('./routers/user')
+
+
 const emitter = new EventEmitter();
 
 
@@ -16,7 +27,7 @@ let all_devices_value = ["0,0", "0,0", "0,0", "0,0"];
 
 //***************************configuring TCP server***************************************************************
 const TCP_port = 8080; //TCP port no.
-const TCP_server = net.createServer() //TCP server created
+const TCP_server = net.createServer()
 
 
 //****************************configuring HTTP server**************************************************************
@@ -29,6 +40,9 @@ const io = socketIO(HTTP_server);
 //****************************serving the static web pages*********************************************************
 const publicDirectoryPath = path.join(__dirname, '../public');
 app.use(express.static(publicDirectoryPath));
+
+app.use(express.json())
+app.use(userRouter)
 
 
 
@@ -60,30 +74,51 @@ function update_check_save_value(data) {
 
 io.on('connection', (HTTP_socket) => {
 
-    HTTP_socket.emit('setupValue', all_devices_value.join(";"));
 
-    function writeOnHTTPSocket(data) {
-        HTTP_socket.emit('updatedValue', data)
-    }
+    HTTP_socket.on('join', (data, callback) => {
+        findDeviceByToken(data.token).then(HTTP_device_id => {
 
-    emitter.on('valueChangedByTCP', writeOnHTTPSocket);
+            HTTP_socket.join(HTTP_device_id)
 
-    HTTP_socket.on('updateValue', (data) => {
+            callback()
 
-        if (update_check_save_value(data)) {
-            emitter.emit('valueChangedByHTTP', data);
-            io.emit('updatedValue', data);
-        }
+
+            function writeOnHTTPSocket(TCP_data, TCP_device_id) {
+                if (TCP_device_id == HTTP_device_id) {
+                    io.to(TCP_device_id).emit('updatedValue', TCP_data)
+                }
+            }
+
+            emitter.on('valueChangedByTCP', writeOnHTTPSocket);
+
+            HTTP_socket.emit('setupValue', all_devices_value.join(";"));
+
+            HTTP_socket.on('updateValue', (HTTP_data) => {
+                if (update_check_save_value(HTTP_data)) {
+                    console.log(HTTP_data)
+                    emitter.emit('valueChangedByHTTP', HTTP_data, HTTP_device_id);
+                    io.to(HTTP_device_id).emit('updatedValue', HTTP_data);
+                }
+            })
+
+            HTTP_socket.on('disconnect', () => {
+                emitter.removeListener('valueChangedByTCP', writeOnHTTPSocket);
+            })
+
+        }).catch(error => {
+            console.log(error)
+            callback(error)
+        })
+
+
 
     })
 
-    HTTP_socket.on('disconnect', () => {
-
-        emitter.removeListener('valueChangedByTCP', writeOnHTTPSocket);
-
-    })
-    
 })
+
+
+
+
 
 
 
@@ -94,22 +129,25 @@ TCP_server.on('connection', handleConnection);
 
 function handleConnection(TCP_socket) {
 
-    console.log(TCP_socket);
 
-    let data_count = 0;
+    console.log(`connection - ${TCP_socket.remoteAddress} - ${TCP_socket.remotePort} - ${TCP_socket.remoteFamily}`)
 
-    function writeOnTCPSocket(data) {
-        TCP_socket.write(data);
+
+    let TCP_device_id = undefined
+
+    let TCP_data_count = 0;
+
+    function writeOnTCPSocket(HTTP_TCP_data, HTTP_TCP_device_id) {
+        if (HTTP_TCP_device_id == TCP_device_id) {
+            TCP_socket.write(HTTP_TCP_data);
+        }
     }
-
-    TCP_socket.write(all_devices_value.join(";"));
-
 
     emitter.on('valueChangedByHTTP', writeOnTCPSocket)
 
+    emitter.on('valueChangedByTCP', writeOnTCPSocket)
+    
 
-
-    emitter.on('valueChangedByTCP', writeOnTCPSocket);
 
         
 
@@ -117,15 +155,60 @@ function handleConnection(TCP_socket) {
     TCP_socket.on('close', onClose)
     TCP_socket.on('error', onError)
 
-    function onData(data) {
-        data = data.toString().trim();
 
-        data_count++;
+    function onData(TCP_data) {
 
-        console.log(data_count);
-        if (update_check_save_value(data)) {
-            emitter.emit('valueChangedByTCP', data);
+        console.log(`data - ${TCP_socket.remoteAddress} - ${TCP_socket.remotePort} - ${TCP_socket.remoteFamily}`)
+        
+       
+        
+
+        TCP_data = TCP_data.toString().trim();
+
+        
+
+        console.log(TCP_data_count);
+
+        if (TCP_data_count == 0) {
+
+            checkDeviceID(TCP_data).then((deviceId) => {
+
+                console.log(deviceId);
+
+                TCP_device_id = deviceId
+
+                TCP_socket.write(all_devices_value.join(";"));
+
+
+            }).catch((error) => {
+
+                TCP_socket.emit('error', new Error(error))
+
+            })
+
+            TCP_data_count++;
+
+        } else {
+
+            if (update_check_save_value(TCP_data)) {
+
+                if (TCP_device_id) {
+
+                    emitter.emit('valueChangedByTCP', TCP_data, TCP_device_id);
+
+                }
+                
+            }
+
         }
+
+        
+
+        
+
+        
+
+
     }
 
     function onClose() {
@@ -134,12 +217,18 @@ function handleConnection(TCP_socket) {
 
         emitter.removeListener('valueChangedByTCP', writeOnTCPSocket);
 
+        console.log(`close - ${TCP_socket.remoteAddress} - ${TCP_socket.remotePort} - ${TCP_socket.remoteFamily}`)
+
     }
 
 
     function onError(error) {
-        
+
         console.log(error);
+        
+        console.log(`error - ${TCP_socket.remoteAddress} - ${TCP_socket.remotePort} - ${TCP_socket.remoteFamily}`)
+
+        TCP_socket.destroy()
 
     }
 

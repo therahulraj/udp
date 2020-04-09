@@ -1,66 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HOME AUTOMATION DEMO</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="./stylesheets/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
 </head>
 <body>
+  <div class="container">
 
-    <div class="container mt-5">
-        <h1 style="text-align: center;">HOME AUTOMATION</h1>
-
-        <div class="mt-3 devices">
-
-          <div class="text-center my-3 device">
-            <label class="switch">
-              <input type="checkbox" class="toggle-on-off" onclick="onSwitchClick(event)">
-              <span class="on-off-slider round"></span>
-            </label>
-            <input type="range" min="0" max="9" value="0" class="range-slider" onchange="onRangeChange(event)">
-          </div>
-
-          <div  class="text-center my-4 device">
-            <label class="switch">
-              <input type="checkbox" class="toggle-on-off" onclick="onSwitchClick(event)">
-              <span class="on-off-slider round"></span>
-            </label>
-            <input type="range" min="0" max="10" value="0" class="range-slider" onchange="onRangeChange(event)">
-          </div>
-
-          <div class="text-center my-4 device">
-            <label class="switch">
-              <input type="checkbox" class="toggle-on-off" onclick="onSwitchClick(event)">
-              <span class="on-off-slider round"></span>
-            </label>
-            <input type="range" min="0" max="10" value="0" class="range-slider" onchange="onRangeChange(event)">
-          </div>
-
-          <div class="text-center my-4 device">
-            <label class="switch">
-              <input type="checkbox" class="toggle-on-off" onclick="onSwitchClick(event)">
-              <span class="on-off-slider round"></span>
-            </label>
-            <input type="range" min="0" max="10" value="0" class="range-slider" onchange="onRangeChange(event)">
-          </div>
-
+    <div class="d-flex flex-row">
+      <div class="register-box">
+        <div>
+          <label>device Id</label>
+          <input class="deviceId" type="text" name="deviceId" required>
         </div>
-
-
-  
-        <!-- <div class="slidecontainer mt-5 mb-3">
-          <input type="range" min="1" max="100" value="0" class="slider" id="myRange">
-        </div> -->
-  
-        <!-- <input type="text" p-2> -->
-        <!-- <button class="submit btn btn-success" id="demo"></button> -->
-        
-  
+        <div>
+          <label>name</label>
+          <input class="name" type="text" name="name" required>
+        </div>
+        <div>
+          <label>email</label>
+          <input class="email" type="email" name="email" required>
+        </div>
+          
+        <div>
+          <label>password</label>
+          <input class="password" type="password" name="password" required>
+        </div>
+          <button onclick="onRegister()">Register</button>
       </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="./js/script.js"></script>
+
+      <div class="login-box">
+        <div>
+          <label>email</label>
+          <input type="email" name="email" class="login-email" required>
+        </div>
+
+        <div>
+          <label>password</label>
+          <input type="password" name="password" class="login-password" required>
+        </div>
+          
+        <button onclick="onLogin()">Login</button>
+      </div>
+    </div>
+  </div>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="./js/index.js"></script>
 </body>
 </html>
