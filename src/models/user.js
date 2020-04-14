@@ -22,9 +22,8 @@ const userSchema = new mongoose.Schema({
         }
     },
     deviceId: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        ref: 'Device'
+        type: String,
+        required: true
     }, 
     password: {
         type: String,
@@ -32,11 +31,31 @@ const userSchema = new mongoose.Schema({
         minlength: 5,
         trim: true,
     },
-    deviceState: {
-        type: String,
-        required: true,
-        default: "0,0;0,0;0,0;0,0"
-    },
+    devices: [{
+        index: {
+            type: Number,
+            required: true
+        }, 
+        state: {
+            type: Number,
+            required: true,
+            validate(value) {
+                if (value != 0 && value != 1) {
+                        throw new Error("invalid state of the Device")
+                    
+                }
+            }
+        }, 
+        speed: {
+            type: Number,
+            required: true,
+            validate(value) {
+                if (value < 0 || value > 5) {
+                    throw new Error("speed of the Device out of range")
+                }
+            }
+        }
+    }],
     tokens: [{
         token: {
             type: String,
@@ -52,7 +71,6 @@ userSchema.methods.generateAuthToken = async function() {
     const user = this
 
     const token = jwt.sign({ _id: user._id.toString() }, 'secret')
-
 
     return token
 
@@ -70,6 +88,28 @@ userSchema.statics.findByCredentials = async (email, password) => {
 
     if(!isMatch) {
         throw new Error('password is invalid')
+    }
+
+    return user
+
+}
+
+userSchema.statics.findByToken = async function (token) {
+    
+    const decoded = jwt.verify(token, 'secret')
+
+    const user = await User.findOne({ _id: decoded._id, 'tokens.token': token })
+
+    return user
+
+}
+
+userSchema.statics.findByDeviceId = async (deviceId) => {
+
+    const user = await User.findOne({ deviceId })
+
+    if (!user) {
+        throw new Error('user not found')
     }
 
     return user
@@ -94,6 +134,7 @@ userSchema.methods.toJSON = function() {
 
     delete userObject.password
     delete userObject.tokens
+    delete userObject.deviceId
     delete userObject.__v
     delete userObject._id
 

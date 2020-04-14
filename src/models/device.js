@@ -14,7 +14,7 @@ const deviceSchema = new mongoose.Schema({
     }
 })
 
-deviceSchema.statics.findDevice = async (deviceId) => {
+deviceSchema.statics.findByDeviceId = async (deviceId) => {
 
     const device = await Device.findOne({ deviceId })
 
@@ -26,7 +26,7 @@ deviceSchema.statics.findDevice = async (deviceId) => {
 
 }
 
-deviceSchema.methods.changeDeviceState = async function() {
+deviceSchema.methods.changeUsedState = async function() {
 
     const device = this
 

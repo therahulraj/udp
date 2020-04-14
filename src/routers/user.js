@@ -11,13 +11,11 @@ router.post('/api/user-register', async (req, res) => {
     
     try {
 
-        const device = await Device.findDevice(req.body.deviceId)
+        const device = await Device.findByDeviceId(req.body.deviceId)
 
         if (device.used) {
             throw new Error('Device already registered')
         }
-
-        user.deviceId = device._id
 
         const token = await user.generateAuthToken()
 
@@ -25,7 +23,7 @@ router.post('/api/user-register', async (req, res) => {
 
         await user.save()
 
-        await device.changeDeviceState()
+        await device.changeUsedState()
 
         res.status(201).send({user, token})
 
