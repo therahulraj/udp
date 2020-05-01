@@ -14,7 +14,7 @@ function validateDeviceState(deviceState) {
     if (deviceStateLength == 3) {
         if (index >= 0 && index <= 3) {
             if (state == 0 || state == 1) {
-                if (speed >= 0 && speed <= 5) {
+                if (speed >= 0 && speed <= 10) {
                     if (speed == 0 && state == 1) {
                     	throw new Error('Invalid state of Device')
                     }
@@ -72,9 +72,9 @@ async function updateDeviceState(deviceId, deviceState) {
 
     let eachDeviceIndex = undefined
 
-    let prevDeviceState = devices.find((eachDevice, index) => {
+    let prevDeviceState = devices.find((device, index) => {
         eachDeviceIndex = index
-        return eachDevice.index == deviceIndex
+        return device.index == deviceIndex
     })
 
 
@@ -85,6 +85,8 @@ async function updateDeviceState(deviceId, deviceState) {
             speed: parseInt(deviceState[2])
         })
     } else {
+        //remember to remove this push when there is prevDevice is not present. 
+        //because the device should not send the data for that device if the device is not added by the user.
         devices.push({
             index: deviceIndex,
             state: parseInt(deviceState[1]),

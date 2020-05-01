@@ -50,7 +50,7 @@ const userSchema = new mongoose.Schema({
             type: Number,
             required: true,
             validate(value) {
-                if (value < 0 || value > 5) {
+                if (value < 0 || value > 10) {
                     throw new Error("speed of the Device out of range")
                 }
             }

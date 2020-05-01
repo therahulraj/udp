@@ -20,10 +20,6 @@ const emitter = new EventEmitter();
 
 
 
-let all_devices_value = ["0,0", "0,0", "0,0", "0,0"];
-
-
-
 //***************************configuring TCP server***************************************************************
 const TCP_port = 8080; //TCP port no.
 const TCP_server = net.createServer()
@@ -64,12 +60,12 @@ io.on('connection', (HTTP_socket) => {
             async function writeOnHTTPSocket(TCP_data) {
 
                 try {
-    
+
                         HTTP_socket.emit('updatedValue', TCP_data)
 
                     } catch (error) {
 
-                    console.log(error)
+                        console.log(error)
                     
                 }
 
@@ -77,13 +73,15 @@ io.on('connection', (HTTP_socket) => {
 
             emitter.on(`TCP_data_listener_${HTTP_device_id}`, writeOnHTTPSocket);
 
-            const { devices } = await User.findByDeviceId(HTTP_device_id)
+            const { devices } = await User.findByDeviceId(HTTP_device_id);
 
             HTTP_socket.emit('setupValue', devices);
 
             HTTP_socket.on('updateValue', (HTTP_data, callback) => {
 
                 try {
+
+                    console.log(HTTP_data);
 
                     validateDeviceState(HTTP_data)
 
@@ -92,8 +90,8 @@ io.on('connection', (HTTP_socket) => {
                         callback()
 
                     } else {
-                        callback('Not able to send data to the device.')
-                        HTTP_socket.emit('updatedValue', `0,${HTTP_data}`)
+                        HTTP_socket.emit('unUpdatedValue', HTTP_data);
+                        callback('Not able to send data to the device.');
                     }
 
                 } catch (error) {
@@ -161,7 +159,9 @@ function handleConnection(TCP_socket) {
     
             TCP_device_id = await validateDeviceIdForTCPRegistration(TCP_data)
 
-            TCP_socket.write(all_devices_value.join(";"));
+            const { devices } = await User.findByDeviceId(TCP_data);
+
+            TCP_socket.write(devices.join(";"));
     
             emitter.on(`HTTP_data_listener_${TCP_device_id}`, writeOnTCPSocket)
     
@@ -173,13 +173,13 @@ function handleConnection(TCP_socket) {
 
                     validateDeviceState(TCP_data)
 
-                    await updateDeviceState(TCP_device_id, TCP_data)
-
                     if (emitter.listenerCount(`TCP_data_listener_${TCP_device_id}`)) {
 
                         emitter.emit(`TCP_data_listener_${TCP_device_id}`, TCP_data);
 
                     }
+
+                    await updateDeviceState(TCP_device_id, TCP_data)
                     
                 }
     
