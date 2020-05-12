@@ -61,7 +61,14 @@ input:checked + .on-off-slider:before {
   border-radius: 50%;
 }
 
-
+.single-device {
+  width: 100%;
+  border: #000 2px solid;
+}
+.single-node {
+  width: 80%;
+  border: #000 1px solid;
+}
 
 
 
@@ -100,4 +107,8 @@ input:checked + .on-off-slider:before {
   height: 20px; /* Slider handle height */
   background: #2196F3; /* Green background */
   cursor: pointer; /* Cursor on hover */
+}
+.register-box, .login-box, .add-device-box, .add-node-box {
+  border: .5px #ced4da solid;
+  border-radius: .25rem;
 }

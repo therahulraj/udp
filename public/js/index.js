@@ -2,10 +2,10 @@
 const $registerBox = document.querySelector(".register-box")
 
 function onRegister() {
-    let registerData = {
-        deviceId: document.querySelector(".deviceId").value,
+    let registerData = { 
         name: document.querySelector(".name").value,
         email: document.querySelector(".email").value,
+        phoneNo: document.querySelector(".phone-no").value,
         password: document.querySelector(".password").value
     }
     console.log(registerData)

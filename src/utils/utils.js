@@ -1,6 +1,7 @@
 const Device = require('../models/device')
 const jwt = require('jsonwebtoken')
 const User = require('../models/user')
+const Node = require('../models/node')
 
 
 function validateDeviceState(deviceState) {
@@ -44,69 +45,149 @@ function validateDeviceState(deviceState) {
     
 }
 
-
-
-
-async function validateDeviceIdForTCPRegistration(deviceId) {
-                    
-    const device = await Device.findByDeviceId(deviceId)
-    
-    if (!device.used) {
-        throw new Error('Device not registered')
+async function findDevicesAndNodesOfUser(user) {
+    await user.populate('devices').execPopulate()
+    await user.populate('nodes').execPopulate()
+    return {
+        devices: user.devices,
+        nodes: user.nodes
     }
-
-    return device.deviceId
- 
-}
-
-//done
-async function updateDeviceState(deviceId, deviceState) {
-
-    const user = await User.findByDeviceId(deviceId)
-
-    deviceState = deviceState.split(',')
-
-    const deviceIndex = parseInt(deviceState[0])
-
-    let devices = user.devices
-
-    let eachDeviceIndex = undefined
-
-    let prevDeviceState = devices.find((device, index) => {
-        eachDeviceIndex = index
-        return device.index == deviceIndex
-    })
-
-
-    if (prevDeviceState) {
-        devices.splice(eachDeviceIndex, 1, {
-            index: deviceIndex,
-            state: parseInt(deviceState[1]),
-            speed: parseInt(deviceState[2])
-        })
-    } else {
-        //remember to remove this push when there is prevDevice is not present. 
-        //because the device should not send the data for that device if the device is not added by the user.
-        devices.push({
-            index: deviceIndex,
-            state: parseInt(deviceState[1]),
-            speed: parseInt(deviceState[2])
-        })
-    }
-
-
-    user.devices = devices
-
-    await user.save()
-
-    
 }
 
 
+async function addDevice(addDeviceData, user) {
+
+        const device = await Device.findByDeviceId(addDeviceData.deviceId)
+
+        if (device.inUse) {
+            throw new Error('Invalid DeviceId')
+        }
+
+        await user.populate('devices').execPopulate()
+
+        console.log(addDeviceData)
+
+        device.inUse = true
+        device.owner = user._id;
+        device.deviceName = addDeviceData.deviceName.trim().toLowerCase()
+        device.placeName = addDeviceData.placeName.trim().toLowerCase()
+
+        //validating data before comparing.
+        if (!(device.deviceName && device.placeName)) {
+            throw new Error('Invalid Device data')
+        }
+        if (!(device.deviceName.length > 1 && device.placeName.length > 1)) {
+            throw new Error('Invalid Device data')
+        }
+
+
+        const deviceName = device.deviceName
+        const placeName = device.placeName
+        let noSameName = true
+
+
+        const filteredSamePlaceName = user.devices.filter((device) => {
+            return device.placeName === placeName
+        })
+
+        if (filteredSamePlaceName.length > 0) {
+            noSameName = filteredSamePlaceName.every((node) => {
+                return node.deviceName !== deviceName
+            })
+        }
+
+        if (!noSameName) {
+            throw new Error('Cannot have two Devices with same name')
+        }
+
+        await device.save()
+
+}
+
+
+async function addNode(addNodeData, user) {
+
+    const device = await Device.findByDeviceId(addNodeData.deviceId)
+
+        if (!device.inUse) {
+            throw new Error('Invalid DeviceId')
+        }
+
+        if (device.owner.toString() !== user._id.toString()) {
+            throw new Error('Invalid DeviceId');
+        }
+
+        const placeName = device.placeName
+        const deviceName = device.deviceName
+
+
+        const node = new Node({
+            ...addNodeData,
+            placeName,
+            deviceName,
+            state: 0,
+            speed: 0,
+            owner: user._id
+        })
+
+        await node.validate()
+
+        const index = parseInt(addNodeData.index, 10)
+        const roomName = addNodeData.roomName.trim().toLowerCase()
+        const nodeName = addNodeData.nodeName.trim().toLowerCase()
+        
+
+        if (index > device.nodesCount || index < 0) {
+            throw new Error('Invalid Node Index')
+        }
+
+        await user.populate('nodes').execPopulate()
+        console.log(user.nodes)
+
+        let validIndex = true
+        let validNodeName = true
+
+        const validIndexAndNodeName = user.nodes.every((node) => {
+
+            validIndex = !(addNodeData.deviceId === node.deviceId && index === node.index);
+            validNodeName = !(placeName === node.placeName && nodeName === node.nodeName && roomName === node.roomName);
+            return validIndex && validNodeName;
+            
+        });
+        
+
+        if (!validIndexAndNodeName) {
+            if (!validIndex) {
+                throw new Error('Invalid index value');
+            }
+            if(!validNodeName) {
+                throw new Error('Cannot have Items with same name in a room.')
+            }
+        }
+
+        await node.save()
+
+}
+
+async function updateNodeState(TCP_data, deviceId) {
+
+    TCP_data = TCP_data.split(",")
+    const index = parseInt(TCP_data[0])
+    const state = parseInt(TCP_data[1])
+    const speed = parseInt(TCP_data[2])
+    const node = await Node.findOne({deviceId, index})
+    if (node) {
+        node.state = state;
+        node.speed = speed;
+    }
+    await node.save()
+}
 
 
  module.exports = {
-    validateDeviceIdForTCPRegistration,
     validateDeviceState,
-    updateDeviceState
+    updateNodeState,
+    findDevicesAndNodesOfUser,
+    addDevice,
+    addNode
  }

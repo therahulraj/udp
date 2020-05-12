@@ -7,7 +7,8 @@ const userSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        minlength: 2
     }, 
     email: {
         type: String,
@@ -21,49 +22,39 @@ const userSchema = new mongoose.Schema({
             }
         }
     },
-    deviceId: {
+    phoneNo: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        unique: true
     }, 
     password: {
         type: String,
         required: true,
         minlength: 5,
-        trim: true,
+        trim: true
     },
-    devices: [{
-        index: {
-            type: Number,
-            required: true
-        }, 
-        state: {
-            type: Number,
-            required: true,
-            validate(value) {
-                if (value != 0 && value != 1) {
-                        throw new Error("invalid state of the Device")
-                    
-                }
-            }
-        }, 
-        speed: {
-            type: Number,
-            required: true,
-            validate(value) {
-                if (value < 0 || value > 10) {
-                    throw new Error("speed of the Device out of range")
-                }
-            }
-        }
-    }],
     tokens: [{
         token: {
             type: String,
             required: true
         }
     }]
+}, {
+    timestamps: true
 })
 
+userSchema.virtual('devices', {
+    ref: 'Device',
+    localField: '_id',
+    foreignField: 'owner'
+})
+
+userSchema.virtual('nodes', {
+    ref: 'Node',
+    localField: '_id',
+    foreignField: 'owner'
+})
 
 
 userSchema.methods.generateAuthToken = async function() {
@@ -94,11 +85,17 @@ userSchema.statics.findByCredentials = async (email, password) => {
 
 }
 
+
+
 userSchema.statics.findByToken = async function (token) {
     
     const decoded = jwt.verify(token, 'secret')
 
     const user = await User.findOne({ _id: decoded._id, 'tokens.token': token })
+
+    if(!user) {
+        throw new Error('User not found')
+    }
 
     return user
 
@@ -109,7 +106,7 @@ userSchema.statics.findByDeviceId = async (deviceId) => {
     const user = await User.findOne({ deviceId })
 
     if (!user) {
-        throw new Error('user not found')
+        throw new Error('User not found')
     }
 
     return user
@@ -134,7 +131,6 @@ userSchema.methods.toJSON = function() {
 
     delete userObject.password
     delete userObject.tokens
-    delete userObject.deviceId
     delete userObject.__v
     delete userObject._id
 

@@ -4,14 +4,35 @@ const deviceSchema = new mongoose.Schema({
     deviceId: {
         type: String,
         required: true,
-        unique: true,
-        trim: true
+        unique: true
     }, 
-    used: {
+    inUse: {
         type: Boolean,
         required: true,
         default: false
+    },
+    nodesCount: {
+        type: Number,
+        required: true
+    },
+    owner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    deviceName: {
+        type: String,
+        lowercase: true,
+        trim: true,
+        minlength: 2
+    },
+    placeName: {
+        type: String,
+        trim: true,
+        lowercase: true,
+        minlength: 2
     }
+}, {
+    timestamps: true
 })
 
 deviceSchema.statics.findByDeviceId = async (deviceId) => {
@@ -19,23 +40,10 @@ deviceSchema.statics.findByDeviceId = async (deviceId) => {
     const device = await Device.findOne({ deviceId })
 
     if (!device) {
-        throw new Error('Cannot find device')
+        throw new Error('Invalid DeviceId')
     }
 
     return device
-
-}
-
-deviceSchema.methods.changeUsedState = async function() {
-
-    const device = this
-
-    if (!device.used) {
-        device.used = true
-    }
-
-    await device.save()
-
 
 }
 
