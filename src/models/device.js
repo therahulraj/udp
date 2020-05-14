@@ -5,6 +5,11 @@ const deviceSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true
+    },
+    id: {
+        type: String,
+        required: true,
+        unique: true
     }, 
     inUse: {
         type: Boolean,
@@ -47,6 +52,29 @@ deviceSchema.statics.findByDeviceId = async (deviceId) => {
 
 }
 
+deviceSchema.statics.findById = async (id) => {
+
+    const device = await Device.findOne({ id })
+
+    if (!device) {
+        throw new Error('Invalid Id')
+    }
+
+    return device
+
+}
+
+deviceSchema.methods.toJSON = function () {
+    const device = this
+    const deviceObject = device.toObject()
+
+    delete deviceObject.id
+    delete deviceObject.owner
+    delete deviceObject.inUse
+
+    return deviceObject
+
+}
 
 
 const Device = mongoose.model('Device', deviceSchema)

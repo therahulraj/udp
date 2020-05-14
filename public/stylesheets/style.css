@@ -63,11 +63,13 @@ input:checked + .on-off-slider:before {
 
 .single-device {
   width: 100%;
-  border: #000 2px solid;
+  border: #ced4da 2px solid;
+  border-radius: .25rem;
 }
 .single-node {
   width: 80%;
-  border: #000 1px solid;
+  border: #ced4da 1px solid;
+  border-radius: .25rem;
 }
 
 

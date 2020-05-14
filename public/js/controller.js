@@ -243,7 +243,7 @@ socket.emit('join', { token }, (error) => {
                     if (inc_device_state) {
                         devices_div.children[i].querySelector('.toggle-on-off').checked = true;
                     } else {
-                        devices_div.children[i].querySelector('.toggle-on-off').checked = true;
+                        devices_div.children[i].querySelector('.toggle-on-off').checked = false;
                     }
 
                     devices_div.children[i].querySelector('.range-slider').value = inc_device_speed
@@ -401,7 +401,7 @@ function displayAllDevices() {
             
             
             allDevicesDiv.innerHTML += `
-                        <div class="mt-4 single-device">
+                        <div class="mt-4 p-3 single-device">
                         <p>placeName: ${structure[i].placeName}<br>
                         device details: ${structure[i].devices[j].deviceId} : ${structure[i].devices[j].nodesCount}<br>
                         deviceName: ${structure[i].devices[j].deviceName}
@@ -410,7 +410,7 @@ function displayAllDevices() {
             for (let k = 0; k < structure[i].devices[j].nodes.length; k++) {
 
                 allDevicesDiv.innerHTML += `
-                        <div class="mt-2 single-node">
+                        <div class="mt-2 p-2 single-node">
                         <p>node details: ${structure[i].devices[j].nodes[k].nodeName} : ${structure[i].devices[j].nodes[k].index} <br>
                         roomName: ${structure[i].devices[j].nodes[k].roomName}</p>
                         </div>`
@@ -499,7 +499,7 @@ function onSwitchClick(event) {
 
     socket.emit('updateValue', {node_state, node_device_id: parent_element.dataset.id}, (error) => {
         if (error) {
-            alert('error')
+            alert(error)
             console.log(error)
             const prev = parent_element.dataset.prev.split(",")
             const prev_state = parseInt(prev[0])

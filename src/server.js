@@ -61,9 +61,12 @@ io.on('connection', (HTTP_socket) => {
             async function writeOnHTTPSocket(TCP_data, TCP_device_id) {
 
                 if (TCP_device_id) {
+
                     HTTP_socket.emit('updatedValue', TCP_data, TCP_device_id)
+                    
                 } else {
-                    HTTP_socket.emit('setupValue', devicesAndNodes);
+                    devicesAndNodes = TCP_data;
+                    HTTP_socket.emit('setupValue', TCP_data);
                 }
 
                 
@@ -83,7 +86,15 @@ io.on('connection', (HTTP_socket) => {
 
                     console.log(node_state, node_device_id);
 
-                    validateDeviceState(node_state)
+                    const matchedDevice = devicesAndNodes.devices.find((device) => {
+                        return device.deviceId === node_device_id
+                    })
+
+                    if (!matchedDevice) {
+                        throw new Error('Invalid DeviceId')
+                    }
+
+                    validateDeviceState(node_state, matchedDevice.nodesCount)
 
                     if (emitter.listenerCount(`HTTP_data_listener_${node_device_id}`)) {
                         emitter.emit(`HTTP_data_listener_${node_device_id}`, node_state);
@@ -181,6 +192,8 @@ function handleConnection(TCP_socket) {
 
     let TCP_user_id = undefined
     let TCP_device_id = undefined
+    let device = undefined
+
 
     let TCP_data_count = 0;
 
@@ -205,7 +218,7 @@ function handleConnection(TCP_socket) {
     
             if (TCP_data_count == 0) {
     
-            const device = await Device.findByDeviceId(TCP_data)
+            device = await Device.findById(TCP_data)
 
             if(!device.inUse) {
                 throw new Error('Device not registered')
@@ -219,19 +232,28 @@ function handleConnection(TCP_socket) {
 
             // TCP_socket.write(devices.join(";"));
 
-            if (TCP_device_id) {
+            if (device && TCP_user_id && TCP_device_id) {
 
-                emitter.on(`HTTP_data_listener_${TCP_device_id}`, writeOnTCPSocket)
+                if (emitter.listenerCount(`HTTP_data_listener_${TCP_device_id}`) === 0) {
 
+                    emitter.on(`HTTP_data_listener_${TCP_device_id}`, writeOnTCPSocket);
+                    TCP_data_count++;
+
+                } else {
+                    throw new Error('DeviceId already connected')
+                }
+
+            } else {
+                throw new Error('Invalid DeviceId')
             }
     
-            TCP_data_count++;
+            
     
             } else {
     
-                if (TCP_user_id) {
+                if (device && TCP_user_id && TCP_device_id) {
 
-                    validateDeviceState(TCP_data)
+                    validateDeviceState(TCP_data, device.nodesCount);
 
                     await updateNodeState(TCP_data, TCP_device_id)
 
@@ -256,7 +278,7 @@ function handleConnection(TCP_socket) {
 
     function onClose() {
 
-        emitter.removeListener(`HTTP_data_listener_${TCP_device_id}`, writeOnTCPSocket)
+        emitter.removeListener(`HTTP_data_listener_${TCP_device_id}`, writeOnTCPSocket);
 
         console.log(`close - ${TCP_socket.remoteAddress} - ${TCP_socket.remotePort} - ${TCP_socket.remoteFamily}`)
 
@@ -265,11 +287,13 @@ function handleConnection(TCP_socket) {
 
     function onError(error) {
 
+        emitter.removeListener(`HTTP_data_listener_${TCP_device_id}`, writeOnTCPSocket);
+
+        TCP_socket.destroy();
+
         console.log(error);
         
         console.log(`error - ${TCP_socket.remoteAddress} - ${TCP_socket.remotePort} - ${TCP_socket.remoteFamily}`)
-
-        TCP_socket.destroy()
 
     }
 

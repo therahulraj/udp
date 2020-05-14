@@ -25,6 +25,7 @@ function onRegister() {
     console.log('error')
     response.text().then(res =>  {
         console.log(res)
+        alert(res)
     });
   }
   else {
@@ -67,6 +68,7 @@ function onLogin() {
           console.log('error')
           response.text().then(res =>  {
               console.log(res)
+              alert(res)
           });
         }
         else {

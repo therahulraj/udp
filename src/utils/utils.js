@@ -4,7 +4,7 @@ const User = require('../models/user')
 const Node = require('../models/node')
 
 
-function validateDeviceState(deviceState) {
+function validateDeviceState(deviceState, nodesCount) {
     deviceState = deviceState.split(",")
     const deviceStateLength = deviceState.length;
     
@@ -13,7 +13,7 @@ function validateDeviceState(deviceState) {
     const speed = parseInt(deviceState[2])
 
     if (deviceStateLength == 3) {
-        if (index >= 0 && index <= 3) {
+        if (index >= 1 && index <= nodesCount) {
             if (state == 0 || state == 1) {
                 if (speed >= 0 && speed <= 10) {
                     if (speed == 0 && state == 1) {
