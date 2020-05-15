@@ -65,103 +65,109 @@ io.on('connection', (HTTP_socket) => {
                     HTTP_socket.emit('updatedValue', TCP_data, TCP_device_id)
                     
                 } else {
+
                     devicesAndNodes = TCP_data;
                     HTTP_socket.emit('setupValue', TCP_data);
+
                 }
 
-                
+            } 
 
-            }
+            if (user && HTTP_user_id && devicesAndNodes) {
 
-            emitter.on(`TCP_data_listener_${HTTP_user_id}`, writeOnHTTPSocket);
+                emitter.on(`TCP_data_listener_${HTTP_user_id}`, writeOnHTTPSocket);
             
 
-            // const { devices } = await User.findByDeviceId(HTTP_device_id);
-
-            HTTP_socket.emit('setupValue', devicesAndNodes);
-
-            HTTP_socket.on('updateValue', async ({ node_state, node_device_id }, callback) => { 
-
-                try {
-
-                    console.log(node_state, node_device_id);
-
-                    const matchedDevice = devicesAndNodes.devices.find((device) => {
-                        return device.deviceId === node_device_id
-                    })
-
-                    if (!matchedDevice) {
-                        throw new Error('Invalid DeviceId')
+                // const { devices } = await User.findByDeviceId(HTTP_device_id);
+    
+                HTTP_socket.emit('setupValue', devicesAndNodes);
+    
+                HTTP_socket.on('updateValue', async ({ node_state, node_device_id }, callback) => { 
+    
+                    try {
+    
+                        console.log(node_state, node_device_id);
+    
+                        const matchedDevice = devicesAndNodes.devices.find((device) => {
+                            return device.deviceId === node_device_id
+                        })
+    
+                        if (!matchedDevice) {
+                            throw new Error('Invalid DeviceId')
+                        }
+    
+                        validateDeviceState(node_state, matchedDevice.nodesCount)
+    
+                        if (emitter.listenerCount(`HTTP_data_listener_${node_device_id}`)) {
+                            emitter.emit(`HTTP_data_listener_${node_device_id}`, node_state);
+                            callback()
+    
+                        } else {
+                            callback('Not able to send data to the device.');
+                        }
+    
+                    } catch (error) {
+    
+                        console.log(error)
+                        callback(error.message)
                     }
-
-                    validateDeviceState(node_state, matchedDevice.nodesCount)
-
-                    if (emitter.listenerCount(`HTTP_data_listener_${node_device_id}`)) {
-                        emitter.emit(`HTTP_data_listener_${node_device_id}`, node_state);
-                        callback()
-
-                    } else {
-                        callback('Not able to send data to the device.');
+                })
+    
+    
+                HTTP_socket.on('addDevice', async (addDeviceData, callback) => {
+    
+                    try {
+    
+                        await addDevice(addDeviceData, user)
+    
+                        devicesAndNodes = await findDevicesAndNodesOfUser(user);
+    
+                        emitter.emit(`TCP_data_listener_${HTTP_user_id}`, devicesAndNodes);
+    
+                        callback('new device added successfully')
+    
+    
+                    } catch(error) {
+    
+                        console.log(error);
+                        callback(error.message)
+    
+    
                     }
+    
+    
+                })
+    
+                HTTP_socket.on('addNode', async (addNodeData, callback) => {
+    
+                    try {
+    
+                        await addNode(addNodeData, user);
+    
+                        devicesAndNodes = await findDevicesAndNodesOfUser(user);
+    
+                        emitter.emit(`TCP_data_listener_${HTTP_user_id}`, devicesAndNodes);
+    
+                        callback('new device added successfully')
+    
+                    } catch(error) {
+    
+                        console.log(error)
+                        callback(error.message)
+    
+                    }
+    
+                })
+    
+    
+    
+                HTTP_socket.on('disconnect', () => {
+                    emitter.removeListener(`TCP_data_listener_${HTTP_user_id}`, writeOnHTTPSocket);
+                })
 
-                } catch (error) {
-
-                    console.log(error)
-                    callback(error.message)
-                }
-            })
-
-
-            HTTP_socket.on('addDevice', async (addDeviceData, callback) => {
-
-                try {
-
-                    await addDevice(addDeviceData, user)
-
-                    devicesAndNodes = await findDevicesAndNodesOfUser(user);
-
-                    emitter.emit(`TCP_data_listener_${HTTP_user_id}`, devicesAndNodes);
-
-                    callback('new device added successfully')
-
-
-                } catch(error) {
-
-                    console.log(error);
-                    callback(error.message)
-
-
-                }
-
-
-            })
-
-            HTTP_socket.on('addNode', async (addNodeData, callback) => {
-
-                try {
-
-                    await addNode(addNodeData, user);
-
-                    devicesAndNodes = await findDevicesAndNodesOfUser(user);
-
-                    emitter.emit(`TCP_data_listener_${HTTP_user_id}`, devicesAndNodes);
-
-                    callback('new device added successfully')
-
-                } catch(error) {
-
-                    console.log(error)
-                    callback(error.message)
-
-                }
-
-            })
-
-
-
-            HTTP_socket.on('disconnect', () => {
-                emitter.removeListener(`TCP_data_listener_${HTTP_user_id}`, writeOnHTTPSocket);
-            })
+            } else {
+                throw new Error('Invalid connection')
+            }
 
         } catch (error) {
 
