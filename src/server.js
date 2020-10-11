@@ -16,7 +16,7 @@ const {
     addDevice,
     addNode
 } = require('./utils/utils');
-const userRouter = require('./routers/user')
+const userRouter = require('./routers/user');
 
 
 const emitter = new EventEmitter();

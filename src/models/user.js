@@ -115,6 +115,7 @@ userSchema.statics.findByDeviceId = async (deviceId) => {
 
 
 userSchema.pre('save', async function (next) {
+    
     const user = this
 
     if (user.isModified('password')) {
@@ -126,6 +127,7 @@ userSchema.pre('save', async function (next) {
 })
 
 userSchema.methods.toJSON = function() {
+    
     const user = this
     const userObject = user.toObject()
 

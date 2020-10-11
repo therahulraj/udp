@@ -27,6 +27,7 @@ router.post('/api/user-register', async (req, res) => {
     } catch (error) {
 
         console.log(error)
+        
         res.status(400).send(error.message)
 
     }
