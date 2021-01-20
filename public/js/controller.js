@@ -441,7 +441,7 @@ function onRangeChange(event) {
 
 
 
-    socket.emit('updateValue', {node_state, node_device_id: parent_element.dataset.id}, (error) => {
+    socket.emit('updateNodeValue', {node_state, node_device_id: parent_element.dataset.id}, (error) => {
 
         if (error) {
             alert(error)

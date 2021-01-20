@@ -40,18 +40,19 @@ function validateDeviceState(deviceState, nodesCount) {
         
     }
     else {
-    	throw new Error("Invalid data provided")
+    	throw new Error("Invalid data")
     }
     
 }
 
+//retrieving all devices and nodes of a user.
 async function findDevicesAndNodesOfUser(user) {
-    await user.populate('devices').execPopulate()
-    await user.populate('nodes').execPopulate()
+    await user.populate('devices').execPopulate();
+    await user.populate('nodes').execPopulate();
     return {
         devices: user.devices,
         nodes: user.nodes
-    }
+    }   
 }
 
 
@@ -63,12 +64,13 @@ async function addDevice(addDeviceData, user) {
             throw new Error('Invalid DeviceId')
         }
 
-        await user.populate('devices').execPopulate()
+        await user.populate('devices').execPopulate();
 
         console.log(addDeviceData)
 
         device.inUse = true
         device.owner = user._id;
+        device.nodesCount = 4
         device.deviceName = addDeviceData.deviceName.trim().toLowerCase()
         device.placeName = addDeviceData.placeName.trim().toLowerCase()
 

@@ -52,18 +52,21 @@ io.on('connection', (HTTP_socket) => {
 
         try {
 
+            //retrieving data by token sent by client
             const user = await User.findByToken(data.token);
             const HTTP_user_id = user._id.toString();
             let devicesAndNodes = await findDevicesAndNodesOfUser(user);
 
-            callback()
+            //if valid token then call callback with no error.
+            callback();
 
-            async function writeOnHTTPSocket(TCP_data, TCP_device_id) {
+
+            function writeOnHTTPSocket(TCP_data, TCP_device_id) {
 
                 if (TCP_device_id) {
 
-                    HTTP_socket.emit('updatedValue', TCP_data, TCP_device_id)
-                    
+                    HTTP_socket.emit('updatedValue', TCP_data, TCP_device_id);
+
                 } else {
 
                     devicesAndNodes = TCP_data;
@@ -73,6 +76,7 @@ io.on('connection', (HTTP_socket) => {
 
             } 
 
+
             if (user && HTTP_user_id && devicesAndNodes) {
 
                 emitter.on(`TCP_data_listener_${HTTP_user_id}`, writeOnHTTPSocket);
@@ -81,26 +85,27 @@ io.on('connection', (HTTP_socket) => {
                 // const { devices } = await User.findByDeviceId(HTTP_device_id);
     
                 HTTP_socket.emit('setupValue', devicesAndNodes);
-    
-                HTTP_socket.on('updateValue', async ({ node_state, node_device_id }, callback) => { 
+
+                //when state of a node is changed.
+                HTTP_socket.on('updateNodeValue', async ({ node_state, node_device_id }, callback) => { 
     
                     try {
-    
+
                         console.log(node_state, node_device_id);
     
                         const matchedDevice = devicesAndNodes.devices.find((device) => {
-                            return device.deviceId === node_device_id
+                            return device.deviceId === node_device_id;
                         })
     
                         if (!matchedDevice) {
-                            throw new Error('Invalid DeviceId')
+                            throw new Error('Invalid DeviceId');
                         }
     
-                        validateDeviceState(node_state, matchedDevice.nodesCount)
+                        validateDeviceState(node_state, matchedDevice.nodesCount);
     
                         if (emitter.listenerCount(`HTTP_data_listener_${node_device_id}`)) {
                             emitter.emit(`HTTP_data_listener_${node_device_id}`, node_state);
-                            callback()
+                            callback();
     
                         } else {
                             callback('Not able to send data to the device.');
@@ -108,12 +113,13 @@ io.on('connection', (HTTP_socket) => {
     
                     } catch (error) {
     
-                        console.log(error)
-                        callback(error.message)
+                        console.log(error);
+                        callback(error.message);
                     }
                 })
     
     
+                //when a new device is being added.
                 HTTP_socket.on('addDevice', async (addDeviceData, callback) => {
     
                     try {
@@ -138,6 +144,8 @@ io.on('connection', (HTTP_socket) => {
     
                 })
     
+
+                //when a new node of device is being is added.
                 HTTP_socket.on('addNode', async (addNodeData, callback) => {
     
                     try {
@@ -161,6 +169,7 @@ io.on('connection', (HTTP_socket) => {
     
     
     
+                //when the user disconnects.
                 HTTP_socket.on('disconnect', () => {
                     emitter.removeListener(`TCP_data_listener_${HTTP_user_id}`, writeOnHTTPSocket);
                 })
@@ -193,12 +202,12 @@ TCP_server.on('connection', handleConnection);
 function handleConnection(TCP_socket) {
 
 
-    console.log(`connection - ${TCP_socket.remoteAddress} - ${TCP_socket.remotePort} - ${TCP_socket.remoteFamily}`)
+    console.log(`connection - ${TCP_socket.remoteAddress} - ${TCP_socket.remotePort} - ${TCP_socket.remoteFamily}`);
 
 
-    let TCP_user_id = undefined
-    let TCP_device_id = undefined
-    let device = undefined
+    let TCP_user_id = undefined;
+    let TCP_device_id = undefined;
+    let device = undefined;
 
 
     let TCP_data_count = 0;
@@ -219,15 +228,15 @@ function handleConnection(TCP_socket) {
             console.log(`data - ${TCP_socket.remoteAddress} - ${TCP_socket.remotePort} - ${TCP_socket.remoteFamily}`)
         
             TCP_data = TCP_data.toString().trim();
-    
+            
             console.log(TCP_data_count);
     
             if (TCP_data_count == 0) {
     
-            device = await Device.findById(TCP_data)
+            device = await Device.findById(TCP_data);
 
             if(!device.inUse) {
-                throw new Error('Device not registered')
+                throw new Error(`${device.id} - Device not registered by any user`);
             }
 
             TCP_user_id = device.owner.toString();
