@@ -4,14 +4,13 @@ const mongoose = require('mongoose')
 //deviceId, id, inUse, nodesCount will be fed by admin before it is being added by user.
 const deviceSchema = new mongoose.Schema({
 
-    //deviceId is for the user, not for device, not stored in the iot device
+    //deviceId is for the user, not for device, this will not be stored in the device
     deviceId: {
         type: String,
         required: true,
         unique: true
     },
-
-    //this is for the iot device, not for the user, user should not know about this id.
+    //this is for the device, not for the user, user should not know about this id.
     id: {
         type: String,
         required: true,
